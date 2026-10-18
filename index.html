@@ -73,6 +73,15 @@ dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:8px 14px}
 dt{color:var(--muted)} dd{margin:0}
 footer{padding:20px 0 96px;border-top:1px solid var(--line);color:var(--muted);font-size:.9rem}
 footer a{color:var(--green-d);font-weight:600}
+.kurir{border:1.5px solid var(--green);border-radius:12px;padding:12px;display:grid;gap:2px}
+.kurir b{color:var(--green-d)}
+.kurir span{color:var(--muted);font-size:.88rem}
+.rincian{border:1px solid var(--line);border-radius:12px;padding:12px;margin:0 0 12px;display:grid;gap:6px;font-size:.92rem}
+.rincian .r{display:flex;justify-content:space-between;gap:10px}
+.rincian .m{color:var(--muted)}
+.rincian .wait{color:#b45309;font-weight:600}
+.rincian .tot{border-top:1px solid var(--line);padding-top:8px;font-weight:800}
+#total{color:#b91c1c;font-weight:600}
 [hidden]{display:none!important}
 @media (max-width:380px){.cards,.fish{grid-template-columns:1fr}}
 </style>
@@ -146,8 +155,13 @@ footer a{color:var(--green-d);font-weight:600}
     <label>Alamat di Cilegon<input id="alamat" type="text" autocomplete="street-address"></label>
     <div><button class="btn line" id="lokasi" type="button">Bagikan lokasi saya</button> <span class="hint" id="lokasi-info"></span></div>
   </div>
-  <div id="total" class="hint"></div>
-  <button class="btn" id="kirim" type="button">Kirim pesanan lewat WhatsApp</button>
+  <div class="step">3. Pengiriman</div>
+  <div class="kurir"><b>Kurir jualikan</b><span>Ongkir dan jadwal antar kami konfirmasi lewat WhatsApp setelah pesananmu masuk.</span></div>
+  <div class="step">4. Rincian pesanan</div>
+  <div id="rincian" class="rincian"></div>
+  <div id="total" role="alert"></div>
+  <button class="btn" id="kirim" type="button" style="width:100%">Kirim pesanan lewat WhatsApp</button>
+  <p class="hint" style="margin-top:8px">Pesanan dikirim lewat WhatsApp. Ongkir (kecuali belanja di atas Rp300.000, gratis) dikonfirmasi dulu sebelum ikan diantar.</p>
 </section>
 
 <section id="v-info" hidden>
@@ -208,11 +222,23 @@ $("maps").href = "https://www.google.com/maps/search/?api=1&query=" + encodeURIC
 function hitung(){
   var l = parseFloat($("q-lele").value) || 0, m = parseFloat($("q-mas").value) || 0;
   var total = l * harga("lele") + m * harga("mas");
-  $("total").textContent = total > 0 ? "Perkiraan harga ikan: " + rp(total) + " (belum termasuk ongkir)" : "";
+  tampilRincian(l, m, total);
   return {l:l, m:m, total:total};
 }
-$("q-lele").addEventListener("input", hitung);
-$("q-mas").addEventListener("input", hitung);
+function tampilRincian(l, m, total){
+  var r = "";
+  if (l > 0) r += '<div class="r"><span>Lele ' + l + ' kg (' + $("b-lele").value + ')</span><span>' + rp(l * harga("lele")) + '</span></div>';
+  if (m > 0) r += '<div class="r"><span>Ikan mas ' + m + ' kg (' + $("b-mas").value + ')</span><span>' + rp(m * harga("mas")) + '</span></div>';
+  if (!r) { $("rincian").innerHTML = '<span class="m">Belum ada ikan dipilih.</span>'; return; }
+  r += '<div class="r m"><span>Pengiriman</span><span>Kurir ' + CONFIG.namaLapak + '</span></div>';
+  if (total >= CONFIG.gratisOngkir) r += '<div class="r"><span>Ongkir</span><span style="color:var(--green-d);font-weight:700">Gratis</span></div>';
+  else r += '<div class="r"><span>Ongkir</span><span class="wait">Belum dikonfirmasi</span></div>';
+  r += '<div class="r tot"><span>Harga ikan</span><span>' + rp(total) + '</span></div>';
+  $("rincian").innerHTML = r;
+}
+["q-lele","q-mas"].forEach(function(id){ $(id).addEventListener("input", hitung); });
+["b-lele","b-mas"].forEach(function(id){ $(id).addEventListener("change", hitung); });
+hitung();
 
 var lokasiLink = "";
 $("lokasi").addEventListener("click", function(){
@@ -222,20 +248,32 @@ $("lokasi").addEventListener("click", function(){
   navigator.geolocation.getCurrentPosition(function(p){
     lokasiLink = "https://www.google.com/maps?q=" + p.coords.latitude + "," + p.coords.longitude;
     info.textContent = "Lokasi tersimpan, ikut terkirim.";
+    hitung();
   }, function(){
     info.textContent = "Lokasi tidak bisa diambil. Tulis alamat saja.";
   }, {enableHighAccuracy:true, timeout:10000});
 });
 $("kirim").addEventListener("click", function(){
   var h = hitung();
+  $("total").textContent = "";
   if (h.l <= 0 && h.m <= 0) { $("total").textContent = "Isi jumlah lele atau ikan mas dulu."; return; }
+  if (!$("nama").value.trim()) { $("total").textContent = "Isi nama dulu ya."; return; }
+  if (!$("alamat").value.trim() && !lokasiLink) { $("total").textContent = "Isi alamat atau bagikan lokasi dulu ya."; return; }
   var b = ["Halo " + CONFIG.namaLapak + ", saya mau pesan:"];
   if (h.l > 0) b.push("- Lele " + h.l + " kg (" + $("b-lele").value + ")");
   if (h.m > 0) b.push("- Ikan mas " + h.m + " kg (" + $("b-mas").value + ")");
   b.push("Nama: " + ($("nama").value || "-"));
   b.push("Alamat antar: " + ($("alamat").value || "-"));
   if (lokasiLink) b.push("Lokasi: " + lokasiLink);
-  b.push("Perkiraan harga: " + rp(h.total));
+  b.push("Pengiriman: Kurir " + CONFIG.namaLapak);
+  b.push("Harga ikan: " + rp(h.total));
+  if (h.total >= CONFIG.gratisOngkir) {
+    b.push("Ongkir: gratis (belanja di atas " + rp(CONFIG.gratisOngkir) + ")");
+    b.push("Mohon konfirmasi jadwal antar. Terima kasih.");
+  } else {
+    b.push("Ongkir: belum dikonfirmasi");
+    b.push("Mohon konfirmasi ongkir dan jadwal antar. Terima kasih.");
+  }
   window.open(waLink(b.join("\n")), "_blank");
 });
 function tampil(){
