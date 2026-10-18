@@ -62,13 +62,17 @@ section{padding:26px 0}
 .cta{text-align:center}
 .cta h2{color:var(--green-d)}
 .cta .btns{justify-content:center}
-.fish{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:end;margin-bottom:12px}
-.fish h3{grid-column:1/-1;margin:0;font-size:1rem}
-label{display:grid;gap:5px;font-weight:600;font-size:.9rem}
-input,select{font:inherit;padding:11px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);width:100%}
+.fish{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start;margin-bottom:12px;background:#f0faf3;border:1px solid #bfe3cb;border-radius:14px;padding:14px}
+.fish h3{grid-column:1/-1;margin:0;font-size:1.05rem;color:var(--green-d)}
+label{display:grid;gap:6px;font-weight:700;font-size:.92rem;color:#0e1f23;text-align:left}
+input,select{font:inherit;padding:11px;border:2px solid #7f9c8a;border-radius:8px;background:#fff;color:var(--ink);width:100%;text-align:left}
+input:focus,select:focus{border-color:var(--green)}
+#v-pesan .hint{color:#3f5357}
 .step{font-weight:800;margin:18px 0 8px;color:var(--green-d)}
 #total{margin:10px 0;font-weight:600}
-#v-pesan h2,#v-info h2{text-align:left}
+#v-pesan,#v-info{text-align:left}
+#v-pesan h2,#v-info h2{text-align:left;color:#0e1f23}
+#v-pesan .step,#v-pesan .fish h3{text-align:left}
 dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:8px 14px}
 dt{color:var(--muted)} dd{margin:0}
 footer{padding:20px 0 96px;border-top:1px solid var(--line);color:var(--muted);font-size:.9rem}
