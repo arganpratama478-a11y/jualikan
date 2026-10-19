@@ -62,6 +62,7 @@ section{padding:26px 0}
 .cta{text-align:center}
 .cta h2{color:var(--green-d)}
 .cta .btns{justify-content:center}
+.fish label.full{grid-column:1/-1}
 .fish{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start;margin-bottom:12px;background:#f0faf3;border:1px solid #bfe3cb;border-radius:14px;padding:14px}
 .fish h3{grid-column:1/-1;margin:0;font-size:1.05rem;color:var(--green-d)}
 label{display:grid;gap:6px;font-weight:700;font-size:.92rem;color:#0e1f23;text-align:left}
@@ -148,16 +149,20 @@ footer a{color:var(--green-d);font-weight:600}
   <div class="fish"><h3>Lele</h3>
     <label>Jumlah (kg)<input id="q-lele" type="number" min="0" step="0.5" value="0"></label>
     <label>Bentuk<select id="b-lele"><option>Hidup</option><option>Sudah dibersihkan</option></select></label>
+    <label class="full">Ukuran<select id="u-lele"><option>8 ekor/kg</option><option>7 ekor/kg</option><option>6 ekor/kg</option><option>5 ekor/kg</option></select></label>
   </div>
   <div class="fish"><h3>Ikan mas</h3>
     <label>Jumlah (kg)<input id="q-mas" type="number" min="0" step="0.5" value="0"></label>
     <label>Bentuk<select id="b-mas"><option>Hidup</option><option>Sudah dibersihkan</option></select></label>
+    <label class="full">Ukuran<select id="u-mas"><option>isi 6/kg</option><option>isi 5/kg</option><option>isi 4/kg</option></select></label>
   </div>
+  <label style="margin-top:4px">Untuk keperluan<select id="untuk"><option>Rumah</option><option>Warung / pecel lele</option><option>Resto / katering</option><option>Lainnya</option></select></label>
   <div class="step">2. Alamat antar</div>
   <div style="display:grid;gap:10px">
     <label>Nama<input id="nama" type="text" autocomplete="name"></label>
     <label>Alamat di Cilegon<input id="alamat" type="text" autocomplete="street-address"></label>
     <div><button class="btn line" id="lokasi" type="button">Bagikan lokasi saya</button> <span class="hint" id="lokasi-info"></span></div>
+    <label>Catatan (opsional)<input id="catatan" type="text" placeholder="Contoh: ukuran seragam, antar sebelum jam 7"></label>
   </div>
   <div class="step">3. Pengiriman</div>
   <div class="kurir"><b>Kurir jualikan</b><span>Ongkir dan jadwal antar kami konfirmasi lewat WhatsApp setelah pesananmu masuk.</span></div>
@@ -231,8 +236,8 @@ function hitung(){
 }
 function tampilRincian(l, m, total){
   var r = "";
-  if (l > 0) r += '<div class="r"><span>Lele ' + l + ' kg (' + $("b-lele").value + ')</span><span>' + rp(l * harga("lele")) + '</span></div>';
-  if (m > 0) r += '<div class="r"><span>Ikan mas ' + m + ' kg (' + $("b-mas").value + ')</span><span>' + rp(m * harga("mas")) + '</span></div>';
+  if (l > 0) r += '<div class="r"><span>Lele ' + l + ' kg, ' + $("u-lele").value + ' (' + $("b-lele").value + ')</span><span>' + rp(l * harga("lele")) + '</span></div>';
+  if (m > 0) r += '<div class="r"><span>Ikan mas ' + m + ' kg, ' + $("u-mas").value + ' (' + $("b-mas").value + ')</span><span>' + rp(m * harga("mas")) + '</span></div>';
   if (!r) { $("rincian").innerHTML = '<span class="m">Belum ada ikan dipilih.</span>'; return; }
   r += '<div class="r m"><span>Pengiriman</span><span>Kurir ' + CONFIG.namaLapak + '</span></div>';
   if (total >= CONFIG.gratisOngkir) r += '<div class="r"><span>Ongkir</span><span style="color:var(--green-d);font-weight:700">Gratis</span></div>';
@@ -241,7 +246,7 @@ function tampilRincian(l, m, total){
   $("rincian").innerHTML = r;
 }
 ["q-lele","q-mas"].forEach(function(id){ $(id).addEventListener("input", hitung); });
-["b-lele","b-mas"].forEach(function(id){ $(id).addEventListener("change", hitung); });
+["b-lele","b-mas","u-lele","u-mas"].forEach(function(id){ $(id).addEventListener("change", hitung); });
 hitung();
 
 var lokasiLink = "";
@@ -264,11 +269,13 @@ $("kirim").addEventListener("click", function(){
   if (!$("nama").value.trim()) { $("total").textContent = "Isi nama dulu ya."; return; }
   if (!$("alamat").value.trim() && !lokasiLink) { $("total").textContent = "Isi alamat atau bagikan lokasi dulu ya."; return; }
   var b = ["Halo " + CONFIG.namaLapak + ", saya mau pesan:"];
-  if (h.l > 0) b.push("- Lele " + h.l + " kg (" + $("b-lele").value + ")");
-  if (h.m > 0) b.push("- Ikan mas " + h.m + " kg (" + $("b-mas").value + ")");
+  if (h.l > 0) b.push("- Lele " + h.l + " kg, " + $("u-lele").value + " (" + $("b-lele").value + ")");
+  if (h.m > 0) b.push("- Ikan mas " + h.m + " kg, " + $("u-mas").value + " (" + $("b-mas").value + ")");
+  b.push("Untuk keperluan: " + $("untuk").value);
   b.push("Nama: " + ($("nama").value || "-"));
   b.push("Alamat antar: " + ($("alamat").value || "-"));
   if (lokasiLink) b.push("Lokasi: " + lokasiLink);
+  if ($("catatan").value.trim()) b.push("Catatan: " + $("catatan").value.trim());
   b.push("Pengiriman: Kurir " + CONFIG.namaLapak);
   b.push("Harga ikan: " + rp(h.total));
   if (h.total >= CONFIG.gratisOngkir) {
